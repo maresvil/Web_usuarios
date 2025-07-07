@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reporte de Usuarios</title>
-  <!-- Tailwind CSS para estilos (dev/demo) -->
+  <!-- Tailwind CSS (solo demo/dev) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #f0f4f8; }
@@ -13,29 +13,29 @@
 <body>
   <div id="root"></div>
 
-  <!-- React + ReactDOM -->
+  <!-- React + ReactDOM UMD -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  
-  <!-- Recharts UMD (define window.Recharts correctamente) -->
+  <!-- Recharts UMD correcto -->
   <script src="https://cdn.jsdelivr.net/npm/recharts/umd/Recharts.min.js"></script>
-  
-  <!-- Papaparse y SheetJS para CSV/XLSX -->
+  <!-- Papaparse y SheetJS -->
   <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
-  
-  <!-- Babel standalone para JSX in-browser (solo prototipo/demo) -->
+  <!-- Babel standalone para JSX in-browser -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    // Comprueba que Recharts ya esté cargado
-    console.log('Recharts global:', window.Recharts);
-
-    const { useState } = React;
+    // —– Aquí arrancamos desde el global, no desde un import —–
+    const RechartsLib = window.Recharts;
+    if (!RechartsLib) {
+      console.error('Recharts no se cargó: revisa la URL del CDN');
+    }
     const {
       BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
       ComposedChart, Line
-    } = Recharts;
+    } = RechartsLib;
+
+    const { useState } = React;
 
     function App() {
       const [data, setData] = useState([]);
@@ -54,11 +54,12 @@
           Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
-            complete: ({ data: rows, meta }) => loadData(rows, meta.fields)
+            complete: ({ data: rows, meta }) =>
+              loadData(rows, meta.fields)
           });
         } else {
           const reader = new FileReader();
-          reader.onload = (ev) => {
+          reader.onload = ev => {
             const wb = XLSX.read(ev.target.result, { type: 'binary' });
             const sheet = wb.Sheets[wb.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
@@ -114,7 +115,12 @@
           for (const e of catOrder['Grupo Edad'])
             for (const i of catOrder['Grupo IMC'])
               for (const p of catOrder['Grupo Piel'])
-                combos.push({ Sexo:s, 'Grupo Edad':e, 'Grupo IMC':i, 'Grupo Piel':p });
+                combos.push({
+                  Sexo:s,
+                  'Grupo Edad':e,
+                  'Grupo IMC':i,
+                  'Grupo Piel':p
+                });
 
         return combos.map(c => {
           const usuarios = data
@@ -128,7 +134,11 @@
               r['Grupo Piel']===c['Grupo Piel']
             )
             .map(r => r['Código VD']);
-          return { ...c, N: usuarios.length, 'Código VD': usuarios.join(', ') };
+          return {
+            ...c,
+            N: usuarios.length,
+            'Código VD': usuarios.join(', ')
+          };
         });
       }
 
@@ -160,8 +170,14 @@
                     return (
                       <div key={cat} className="bg-white p-4 rounded shadow">
                         <h2 className="font-semibold mb-2">{cat}</h2>
-                        <BarChart width={300} height={200}
-                          data={catOrder[cat].map(k=>({ name:k, value:counts[k]||0 }))}>
+                        <BarChart
+                          width={300}
+                          height={200}
+                          data={catOrder[cat].map(k=>({
+                            name:k,
+                            value:counts[k]||0
+                          }))}
+                        >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis allowDecimals={false} />
@@ -173,23 +189,28 @@
                         </BarChart>
                       </div>
                     );
-                  })
-                }
-
+                  })}
                 {['Talla (cm)','Peso (Kg)','Edad'].map(key => {
                   const d = stats(key);
                   return (
                     <div key={key} className="bg-white p-4 rounded shadow">
                       <h2 className="font-semibold mb-2">{key}</h2>
-                      <ComposedChart width={300} height={200}
-                        data={d.vals.map((v,i)=>({ x:i, v }))}>
+                      <ComposedChart
+                        width={300}
+                        height={200}
+                        data={d.vals.map((v,i)=>({ x:i, v }))}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="x" hide />
                         <YAxis />
                         <Tooltip />
                         <Bar dataKey="v" barSize={2} fill={colors['Categoría piel']['III']} />
-                        <Line type="monotone" dataKey="v"
-                          stroke={colors['Categoría piel']['V']} dot={false}/>
+                        <Line
+                          type="monotone"
+                          dataKey="v"
+                          stroke={colors['Categoría piel']['V']}
+                          dot={false}
+                        />
                       </ComposedChart>
                       <p>N: {d.n}</p>
                       <p>Media: {d.mean}</p>
@@ -218,8 +239,14 @@
                       <tr key={i} className={i%2?'bg-gray-50':''}>
                         {['Sexo','Grupo Edad','Grupo IMC','Grupo Piel']
                           .map(col=>(
-                            <td key={col} className="px-3 py-1"
-                              style={{ backgroundColor: colors[col][row[col]], color:'#000' }}>
+                            <td
+                              key={col}
+                              className="px-3 py-1"
+                              style={{
+                                backgroundColor: colors[col][row[col]],
+                                color: '#000'
+                              }}
+                            >
                               {row[col]}
                             </td>
                           ))
