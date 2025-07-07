@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reporte de Usuarios</title>
-  <!-- Tailwind CSS (solo para desarrollo/demo) -->
+  <!-- Tailwind CSS para estilos (dev/demo) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #f0f4f8; }
@@ -13,20 +13,23 @@
 <body>
   <div id="root"></div>
 
-  <!-- React + ReactDOM UMD -->
+  <!-- React + ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Babel para JSX in-browser (solo prototipo) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Recharts UMD correcto desde unpkg -->
-  <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
-  <!-- Papaparse y SheetJS -->
+  
+  <!-- Recharts UMD (define window.Recharts correctamente) -->
+  <script src="https://cdn.jsdelivr.net/npm/recharts/umd/Recharts.min.js"></script>
+  
+  <!-- Papaparse y SheetJS para CSV/XLSX -->
   <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- Babel standalone para JSX in-browser (solo prototipo/demo) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    // Verifica que Recharts está disponible globalmente:
-    console.log('Recharts cargado:', window.Recharts);
+    // Comprueba que Recharts ya esté cargado
+    console.log('Recharts global:', window.Recharts);
 
     const { useState } = React;
     const {
@@ -83,7 +86,6 @@
         'Grupo Piel': ['I-II','III-IV','V-VI'],
         'Categoría piel': ['I','II','III','IV','V','VI']
       };
-
       const colors = {
         'Sexo': { 'Masculino':'#4f46e5', 'femenino':'#ec4899' },
         'Grupo Edad': {'<50':'#f97316','>50':'#10b981'},
@@ -151,26 +153,28 @@
           {data.length > 0 && (
             <>
               <div className="grid grid-cols-2 gap-4 mb-6">
-                {['Sexo','Grupo Edad','Grupo IMC','Grupo Piel','Categoría piel'].map(cat => {
-                  const counts = {};
-                  data.forEach(r => counts[r[cat]] = (counts[r[cat]]||0)+1);
-                  return (
-                    <div key={cat} className="bg-white p-4 rounded shadow">
-                      <h2 className="font-semibold mb-2">{cat}</h2>
-                      <BarChart width={300} height={200}
-                        data={catOrder[cat].map(k=>({ name:k, value:counts[k]||0 }))}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis allowDecimals={false} />
-                        <Tooltip />
-                        {catOrder[cat].map((k,i) => (
-                          <Cell key={i} fill={colors[cat][k]} />
-                        ))}
-                        <Bar dataKey="value" />
-                      </BarChart>
-                    </div>
-                  );
-                })}
+                {['Sexo','Grupo Edad','Grupo IMC','Grupo Piel','Categoría piel']
+                  .map(cat => {
+                    const counts = {};
+                    data.forEach(r => counts[r[cat]] = (counts[r[cat]]||0)+1);
+                    return (
+                      <div key={cat} className="bg-white p-4 rounded shadow">
+                        <h2 className="font-semibold mb-2">{cat}</h2>
+                        <BarChart width={300} height={200}
+                          data={catOrder[cat].map(k=>({ name:k, value:counts[k]||0 }))}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis allowDecimals={false} />
+                          <Tooltip />
+                          {catOrder[cat].map((k,i)=>(
+                            <Cell key={i} fill={colors[cat][k]} />
+                          ))}
+                          <Bar dataKey="value" />
+                        </BarChart>
+                      </div>
+                    );
+                  })
+                }
 
                 {['Talla (cm)','Peso (Kg)','Edad'].map(key => {
                   const d = stats(key);
@@ -203,21 +207,23 @@
                   <thead className="bg-gray-100">
                     <tr>
                       {['Sexo','Grupo Edad','Grupo IMC','Grupo Piel','N','Código VD']
-                        .map(h => (
+                        .map(h=>(
                           <th key={h} className="px-3 py-2 text-left">{h}</th>
                         ))
                       }
                     </tr>
                   </thead>
                   <tbody>
-                    {buildTable().map((row,i) => (
+                    {buildTable().map((row,i)=>(
                       <tr key={i} className={i%2?'bg-gray-50':''}>
-                        {['Sexo','Grupo Edad','Grupo IMC','Grupo Piel'].map(col => (
-                          <td key={col} className="px-3 py-1"
-                              style={{ backgroundColor: colors[col][row[col]], color: '#000' }}>
-                            {row[col]}
-                          </td>
-                        ))}
+                        {['Sexo','Grupo Edad','Grupo IMC','Grupo Piel']
+                          .map(col=>(
+                            <td key={col} className="px-3 py-1"
+                              style={{ backgroundColor: colors[col][row[col]], color:'#000' }}>
+                              {row[col]}
+                            </td>
+                          ))
+                        }
                         <td className="px-3 py-1">{row.N}</td>
                         <td className="px-3 py-1">{row['Código VD']}</td>
                       </tr>
@@ -235,3 +241,4 @@
   </script>
 </body>
 </html>
+
